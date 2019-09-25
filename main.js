@@ -19,9 +19,10 @@ if (process.env.NODE_ENV !== 'development') {
 }
 
 bot.on('message', processMessage);
-cron.schedule('* */2 * * *', makePost);
+cron.schedule('0 0 */2 * * *', makePost);
 
 async function processMessage(ctx) {
+    console.log('Got message: ');
     console.log(ctx.message);
 
     const {message} = ctx;
@@ -70,6 +71,7 @@ async function processText(ctx, text) {
 
 async function makePost() {
     const message = await db.getMessage();
+    console.log('Making post:', new Date());
 
     if (!message) {
         return;
