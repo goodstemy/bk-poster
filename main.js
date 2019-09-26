@@ -11,15 +11,19 @@ const bot = new Telegraf(process.env.BOT_TOKEN, {username: 'Автопостин
 
 const BK_ID_PRODUCTION = -1001136088389;
 const BK_ID_TEST = -1001481857630;
+const CRON_CONFIG_DEVELOPMENT = '* * * * * *';
+const CRON_CONFIG_PRODUCTION = '0 0 */2 * * *';
 
 let BK_ID = BK_ID_TEST;
+let CRON_CONFIG = CRON_CONFIG_DEVELOPMENT;
 
 if (process.env.NODE_ENV !== 'development') {
+    CRON_CONFIG = CRON_CONFIG_PRODUCTION;
     BK_ID = BK_ID_PRODUCTION;
 }
 
 bot.on('message', processMessage);
-cron.schedule('0 0 */2 * * *', makePost);
+cron.schedule(CRON_CONFIG, makePost);
 
 async function processMessage(ctx) {
     console.log('Got message: ');
@@ -37,6 +41,10 @@ async function processMessage(ctx) {
 
     if (message.text) {
         return processText(ctx, message.text);
+    }
+
+    if (message.video) {
+        return processVideo(ctx, message.video);
     }
 
     ctx.reply('Тип сообщения не поддерживается');
@@ -64,6 +72,15 @@ async function processText(ctx, text) {
     db.pushMessage({
         text,
         type: MESSAGE_TYPE.text,
+    });
+
+    ctx.deleteMessage();
+}
+
+async function processVideo(ctx, video) {
+    db.pushMessage({
+        id: utils.getVideoId(video),
+        type: MESSAGE_TYPE.video,
     });
 
     ctx.deleteMessage();
@@ -97,6 +114,13 @@ async function makePost() {
         case MESSAGE_TYPE.text:
             await bot.telegram
                 .sendMessage(BK_ID, text)
+                .catch(err => console.error(`Error when send scheduled post. Reason: ${err.message}`));
+
+            break;
+
+        case MESSAGE_TYPE.video:
+            await bot.telegram
+                .sendVideo(BK_ID, id)
                 .catch(err => console.error(`Error when send scheduled post. Reason: ${err.message}`));
 
             break;

@@ -3,5 +3,6 @@ module.exports = {
         photo: 0,
         document: 1,
         text: 2,
+        video: 3,
     },
 };
