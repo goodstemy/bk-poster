@@ -11,15 +11,20 @@ const bot = new Telegraf(process.env.BOT_TOKEN, {username: 'Автопостин
 
 const BK_ID_PRODUCTION = -1001136088389;
 const BK_ID_TEST = -1001481857630;
-const CRON_CONFIG_DEVELOPMENT = '* * * * * *';
+const SUGGEST_BK_PRODUCTION = -1001450845044;
+const SUGGEST_BK_TEST = -393958223;
+const CRON_CONFIG_DEVELOPMENT = '*/10 * * * * *';
 const CRON_CONFIG_PRODUCTION = '0 0 */2 * * *';
+
 
 let BK_ID = BK_ID_TEST;
 let CRON_CONFIG = CRON_CONFIG_DEVELOPMENT;
+let SUGGEST_BK = SUGGEST_BK_TEST;
 
 if (process.env.NODE_ENV !== 'development') {
     CRON_CONFIG = CRON_CONFIG_PRODUCTION;
     BK_ID = BK_ID_PRODUCTION;
+    SUGGEST_BK = SUGGEST_BK_PRODUCTION;
 }
 
 bot.on('message', processMessage);
@@ -93,6 +98,10 @@ async function makePost() {
     if (!message) {
         return;
     }
+
+    const count = await db.getCountOfScheduledPosts();
+
+    bot.telegram.sendMessage(SUGGEST_BK, `Постов в очереди: ${count}`);
 
     const {type, id, text} = message;
 
